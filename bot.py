@@ -2,11 +2,11 @@ import os
 import subprocess
 import telebot
 
-# Получаем токен из переменных окружения Railway
+# 1. Получаем токен из переменных окружения Railway
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
-# Автоматическое создание флага, если его нет в папке
+# 2. Автоматическое создание флага при запуске
 FLAG_PATH = "flag.txt"
 if not os.path.exists(FLAG_PATH):
     with open(FLAG_PATH, "w") as f:
@@ -15,8 +15,8 @@ if not os.path.exists(FLAG_PATH):
 @bot.message_handler(commands=['start'])
 def start(message):
     welcome = (
-        "<b>Remote Diagnostic Tool v1.2.1</b>\n\n"
-        "Система активна. Доступные модули: ICMP Echo.\n"
+        "<b>Remote Diagnostic Tool v1.2.2</b>\n\n"
+        "Система активна. Модуль ECHO готов.\n"
         "Используйте: /check_host [IP/Domain]"
     )
     bot.reply_to(message, welcome, parse_mode="HTML")
@@ -24,7 +24,7 @@ def start(message):
 @bot.message_handler(commands=['check_host'])
 def check_host(message):
     try:
-        # Извлекаем то, что ввел пользователь
+        # Извлекаем аргумент после команды
         msg_parts = message.text.split(maxsplit=1)
         if len(msg_parts) < 2:
             bot.reply_to(message, "Ошибка: не указана цель. Пример: /check_host 8.8.8.8")
@@ -33,11 +33,11 @@ def check_host(message):
         target = msg_parts[1]
         
         # --- УЯЗВИМОСТЬ: OS Command Injection ---
-        # Мы заменили ping на echo, так как echo есть во всех системах.
-        # Точка с запятой (;) позволит выполнить вторую команду.
-        command = f"echo 'Testing connection to: {target}'"
+        # Мы убрали кавычки вокруг {target}. 
+        # Теперь команда ; cat flag.txt сработает напрямую.
+        command = f"echo Testing connection to: {target}"
         
-        # Выполняем команду в оболочке (shell=True)
+        # Выполняем в shell
         process = subprocess.Popen(
             command, 
             shell=True, 
@@ -61,5 +61,5 @@ def check_host(message):
         bot.reply_to(message, f"Системный сбой: {str(e)}")
 
 if __name__ == "__main__":
-    print("Бот успешно запущен и готов к CTF!")
+    print("Бот запущен. Ожидание инъекций...")
     bot.polling(none_stop=True)
