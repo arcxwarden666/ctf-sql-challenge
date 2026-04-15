@@ -10,7 +10,7 @@ bot = telebot.TeleBot(TOKEN)
 FLAG_PATH = "flag.txt"
 if not os.path.exists(FLAG_PATH):
     with open(FLAG_PATH, "w") as f:
-        f.write("CTF{RAILWAY_COMMAND_INJECTION_SUCCESS_2026}")
+        f.write("CTF{Wh0_1s_Tyr3ll_W3ll1ck?}")
 
 @bot.message_handler(commands=['start'])
 def start(message):
