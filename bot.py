@@ -2,21 +2,21 @@ import os
 import subprocess
 import telebot
 
-# Получаем токен из настроек Railway (Environment Variables)
+# Получаем токен из переменных окружения Railway
 TOKEN = os.getenv("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
-# Создаем файл с флагом при запуске, если его нет
+# Автоматическое создание флага, если его нет в папке
 FLAG_PATH = "flag.txt"
 if not os.path.exists(FLAG_PATH):
     with open(FLAG_PATH, "w") as f:
-        f.write("CTF{Wh0_1s_Tyr3ll_W3ll1k}")
+        f.write("CTF{RAILWAY_COMMAND_INJECTION_SUCCESS_2026}")
 
 @bot.message_handler(commands=['start'])
 def start(message):
     welcome = (
-        "<b>Remote Network Diagnostic Tool v1.2</b>\n\n"
-        "Система готова к работе.\n"
+        "<b>Remote Diagnostic Tool v1.2.1</b>\n\n"
+        "Система активна. Доступные модули: ICMP Echo.\n"
         "Используйте: /check_host [IP/Domain]"
     )
     bot.reply_to(message, welcome, parse_mode="HTML")
@@ -24,17 +24,20 @@ def start(message):
 @bot.message_handler(commands=['check_host'])
 def check_host(message):
     try:
+        # Извлекаем то, что ввел пользователь
         msg_parts = message.text.split(maxsplit=1)
         if len(msg_parts) < 2:
-            bot.reply_to(message, "Ошибка: укажите цель. Пример: /check_host google.com")
+            bot.reply_to(message, "Ошибка: не указана цель. Пример: /check_host 8.8.8.8")
             return
         
         target = msg_parts[1]
         
-        # УЯЗВИМОСТЬ: Специально оставлена для CTF
-        command = f"ping -c 1 {target}"
+        # --- УЯЗВИМОСТЬ: OS Command Injection ---
+        # Мы заменили ping на echo, так как echo есть во всех системах.
+        # Точка с запятой (;) позволит выполнить вторую команду.
+        command = f"echo 'Testing connection to: {target}'"
         
-        # Выполнение команды в системе Railway
+        # Выполняем команду в оболочке (shell=True)
         process = subprocess.Popen(
             command, 
             shell=True, 
@@ -45,6 +48,7 @@ def check_host(message):
         
         output = stdout.decode('utf-8', errors='ignore')
         error_output = stderr.decode('utf-8', errors='ignore')
+        
         final_output = output if output else error_output
         
         bot.send_message(
@@ -54,8 +58,8 @@ def check_host(message):
         )
 
     except Exception as e:
-        bot.reply_to(message, f"Ошибка сервера: {str(e)}")
+        bot.reply_to(message, f"Системный сбой: {str(e)}")
 
 if __name__ == "__main__":
-    print("Бот запущен на Railway...")
+    print("Бот успешно запущен и готов к CTF!")
     bot.polling(none_stop=True)
